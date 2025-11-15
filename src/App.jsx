@@ -302,14 +302,14 @@ export default function App() {
           className={activeView === 'budget' ? 'nav-item active' : 'nav-item'}
           onClick={() => setActiveView('budget')}
         >
-          Monthly Budget Planner
+          💰 MBC
         </button>
         <button
           type="button"
           className={activeView === 'credit' ? 'nav-item active' : 'nav-item'}
           onClick={() => setActiveView('credit')}
         >
-          Credit Controller
+          📉 CC
         </button>
       </nav>
 
