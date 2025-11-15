@@ -3,6 +3,7 @@ import Row from './components/Row.jsx'
 import Charts from './components/Charts.jsx'
 import { STR, STORAGE_KEY, THEME_KEY, cssId, formatEuro, sum } from './utils'
 import { initEmpty, loadInitialState, simpleData, sampleData } from './data'
+import CreditController from './components/CreditController.jsx'
 
 function Kpi({ label, value, good, bad }) {
   const cls = ['kpi']
@@ -297,21 +298,35 @@ export default function App() {
     <>
       {/* Top navigation menu */}
       <nav className="app-nav">
-        <button
-          type="button"
-          className={activeView === 'budget' ? 'nav-item active' : 'nav-item'}
-          onClick={() => setActiveView('budget')}
-        >
-          💰 MBC
-        </button>
-        <button
-          type="button"
-          className={activeView === 'credit' ? 'nav-item active' : 'nav-item'}
-          onClick={() => setActiveView('credit')}
-        >
-          📉 CC
-        </button>
-      </nav>
+        <div className="nav-left">
+          <button
+            type="button"
+            className={activeView === 'budget' ? 'nav-item active' : 'nav-item'}
+            onClick={() => setActiveView('budget')}
+          >
+            💰 MBC
+          </button>
+          <button
+            type="button"
+            className={activeView === 'credit' ? 'nav-item active' : 'nav-item'}
+            onClick={() => setActiveView('credit')}
+          >
+            📉 CC
+          </button>
+        </div>
+
+        <div className="nav-right">
+          <button
+            type="button"
+            className="nav-theme-btn"
+            title="Licht/Dunkel"
+            onClick={toggleTheme}
+          >
+            🌙/☀️
+          </button>
+        </div>
+
+      </nav >
 
       {activeView === 'budget' ? (
         <>
@@ -333,25 +348,46 @@ export default function App() {
                   bad={savingsRate < 0}
                 />
               </div>
+
               <div className="tools">
-                <button id="btn-theme" title="Licht/Dunkel" type="button" onClick={toggleTheme}>
-                  🌙/☀️
-                </button>
-                <button id="btn-simple" type="button" onClick={setSimpleData}>
-                  Simple Data
-                </button>
-                <button id="btn-sample" type="button" onClick={setSampleData} title="Beispieldaten laden">
-                  Beispiel (groß)
-                </button>
-                <button
-                  id="btn-reset"
-                  className="danger"
-                  type="button"
-                  onClick={resetAll}
-                  title="Alle Daten löschen"
-                >
-                  Reset
-                </button>
+                {/* Data dropdown */}
+                <div className="dropdown">
+                  <button
+                    type="button"
+                    className="dropdown-toggle"
+                  >
+                    Data ▾
+                  </button>
+
+                  <div className="dropdown-menu">
+                    <button
+                      id="btn-simple"
+                      type="button"
+                      onClick={setSimpleData}
+                    >
+                      Simple Data
+                    </button>
+                    <button
+                      id="btn-sample"
+                      type="button"
+                      onClick={setSampleData}
+                      title="Beispieldaten laden"
+                    >
+                      Beispiel (groß)
+                    </button>
+                    <button
+                      id="btn-reset"
+                      className="danger"
+                      type="button"
+                      onClick={resetAll}
+                      title="Alle Daten löschen"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+
+                {/* Export / Import stays like before */}
                 <div className="btn-row" style={{ margin: 0 }}>
                   <button id="btn-export-json" type="button" onClick={exportJson}>
                     Export JSON
@@ -375,6 +411,7 @@ export default function App() {
               </div>
             </div>
           </header>
+
 
           <main id="app" role="main">
             {/* Einnahmen */}
@@ -767,16 +804,10 @@ export default function App() {
         </>
       ) : (
         <main id="app" role="main">
-          <section className="card">
-            <div className="head">
-              <div className="title">Credit Controller</div>
-            </div>
-            <div className="body">
-              <p>Hello World – Credit Controller coming soon 🚧</p>
-            </div>
-          </section>
+          <CreditController />
         </main>
-      )}
+      )
+      }
     </>
   )
 }

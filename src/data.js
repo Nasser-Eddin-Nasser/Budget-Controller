@@ -1,5 +1,20 @@
 import { STORAGE_KEY } from './utils'
 
+export const creditDefaults = {
+  betrag: 150000,
+  zins: 4.03,
+  rate: 1003,
+  hausgeld: 250,
+  maxyears: 20,
+  bind: 10,
+  sonder: `[
+  { "month": 12, "amount": 5000 }
+]`,
+  wechsel: `[
+  { "month": 121, "amount": 1003,75 }
+]`,
+}
+
 export const simpleData = {
   earnings: [{ name: 'Gehalt', amount: 5000 }],
   yearlyBonuses: [],
