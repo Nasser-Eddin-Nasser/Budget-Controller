@@ -108,3 +108,27 @@ details.cat .cat-title{ display:flex; align-items:center; gap:.65rem }
 details.cat .cat-title h4{ margin:0 }
 details.cat .cat-actions{ display:flex; gap:.4rem; align-items:center; flex-wrap:wrap }
 details.cat .cat-content{ padding:12px 14px }
+
+
+.app-nav{
+  display:flex;
+  gap:.5rem;
+  padding:.5rem 1rem;
+  border-bottom:1px solid var(--hair);
+  background: color-mix(in oklab, var(--panel) 95%, transparent);
+}
+
+.nav-item{
+  border:1px solid var(--hair);
+  background:var(--panel-2);
+  padding:.45rem .9rem;
+  border-radius:.7rem;
+  font-size:.9rem;
+  cursor:pointer;
+}
+
+.nav-item.active{
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+}
