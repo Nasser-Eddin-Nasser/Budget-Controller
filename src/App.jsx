@@ -330,7 +330,14 @@ export default function App() {
 
       {activeView === 'budget' ? (
         <>
+             <header className="credit-header">
+                <div className="header-inner">
+                    <div className="title">
+                        <h1>Monatliches Budget – Rechner &amp; Visualisierung</h1>
+                    </div>
+                </div>
           <header className="summary" aria-label="Summary header">
+            
             <div className="summary-inner">
               <div className="kpis" role="region" aria-label="KPIs">
                 <Kpi label="Einnahmen (inkl. Boni)" value={formatEuro(earnTotalMonthly)} />
