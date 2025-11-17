@@ -750,6 +750,8 @@ export default function App() {
                     breakdownList={breakdownList}
                     fixedMonthly={fixedMonthly}
                     flexibleMonthly={flexibleMonthly}
+                    categoriesOrder={state.categoriesOrder}
+                    monthlyExpenses={state.monthlyExpenses}
                   />
                 </div>
               </div>

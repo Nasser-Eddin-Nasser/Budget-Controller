@@ -897,3 +897,54 @@ details.cat .cat-content {
   resize: vertical;
   box-sizing: border-box;
 }
+
+.charts-block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.budget-pies-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.budget-pie {
+  border: 1px solid color-mix(in oklab, var(--hair) 80%, transparent);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--panel);
+  box-shadow: 0 4px 14px color-mix(in oklab, #000 10%, transparent);
+}
+
+.budget-pie h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.budget-pie canvas {
+  display: block;
+  width: 100% !important;
+  height: 220px !important;
+}
+
+.budget-pie-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.budget-pie-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+  border-bottom: 1px dashed color-mix(in oklab, var(--hair) 80%, transparent);
+}
+
+.budget-pie-list li:last-child {
+  border-bottom: none;
+}

@@ -1,175 +1,296 @@
+// components/Charts.jsx
 import React, { useEffect, useRef } from 'react'
-import {
-  Chart,
-  BarController,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  DoughnutController,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from 'chart.js'
-import annotationPlugin from 'chartjs-plugin-annotation'
+import { Chart, ArcElement, Tooltip, Legend } from 'chart.js'
 import { formatEuro } from '../utils'
 
-Chart.register(
-  BarController,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  DoughnutController,
-  ArcElement,
-  Tooltip,
-  Legend,
-  annotationPlugin,
-)
+Chart.register(ArcElement, Tooltip, Legend)
 
-function palette(n) {
-  const cs = getComputedStyle(document.documentElement)
-  const base = ['--pie1', '--pie2', '--pie3', '--pie4', '--pie5', '--pie6']
-  const arr = []
-  for (let i = 0; i < n; i++) {
-    const v = cs.getPropertyValue(base[i % base.length]).trim()
-    arr.push(v || `hsl(${(i * 57) % 360} 70% 50%)`)
-  }
-  return arr
+function percent(part, total) {
+  if (!total || total <= 0) return 0
+  return (part / total) * 100
 }
 
-export default function Charts({ breakdownList, fixedMonthly, flexibleMonthly }) {
-  const barRef = useRef(null)
-  const pieRef = useRef(null)
-  const fixedRef = useRef(null)
+export default function Charts({
+  breakdownList,
+  fixedMonthly,
+  flexibleMonthly,
+  categoriesOrder,
+  monthlyExpenses,
+}) {
+  const overallRef = useRef(null)
+  const fixedFlexRef = useRef(null)
+  const fixedItemsRef = useRef(null)
+  const flexItemsRef = useRef(null)
+
+  const chartInstancesRef = useRef({})
+
+  // ----- overall by category (unchanged) -----
+  const overallData = (breakdownList || []).filter((x) => x.total > 0)
+  const overallTotal = overallData.reduce((sum, x) => sum + (x.total || 0), 0)
+
+  // ----- NEW: per-item fixed / flexible data -----
+  const fixedItemData = []
+  const flexItemData = []
+
+  ;(categoriesOrder || []).forEach((cat) => {
+    const rows = ((monthlyExpenses || {})[cat] || []) || []
+    rows.forEach((r, idx) => {
+      const amt = +r?.amount || 0
+      if (!amt) return
+      const baseName = (r.name || '').trim()
+      const label = baseName ? `${baseName} (${cat})` : cat
+      const key = `${cat}-${idx}`
+
+      if (r.fixed) {
+        fixedItemData.push({ key, label, total: amt })
+      } else {
+        flexItemData.push({ key, label, total: amt })
+      }
+    })
+  })
+
+  const fixedItemsTotal = fixedItemData.reduce((sum, x) => sum + x.total, 0)
+  const flexItemsTotal = flexItemData.reduce((sum, x) => sum + x.total, 0)
 
   useEffect(() => {
-    const gridColor =
-      getComputedStyle(document.documentElement).getPropertyValue('--grid').trim() || '#e5e7eb'
+    // destroy old charts
+    Object.values(chartInstancesRef.current).forEach((c) => c && c.destroy())
+    chartInstancesRef.current = {}
 
-    const labels = breakdownList.map((x) => x.cat)
-    const data = breakdownList.map((x) => x.total)
-    const colors = palette(breakdownList.length)
+    const root = document.documentElement
+    const getVar = (name, fb) =>
+      getComputedStyle(root).getPropertyValue(name).trim() || fb
 
-    let barChart
-    let pieChart
-    let fixedChart
+    const colors = [
+      getVar('--pie1', '#2563eb'),
+      getVar('--pie2', '#10b981'),
+      getVar('--pie3', '#ef4444'),
+      getVar('--pie4', '#f59e0b'),
+      getVar('--pie5', '#8b5cf6'),
+      getVar('--pie6', '#ec4899'),
+    ]
 
-    if (barRef.current) {
-      barChart = new Chart(barRef.current.getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'Monatlicher Betrag',
-              data,
-              backgroundColor: colors,
-              borderWidth: 0,
-              borderRadius: 6,
-            },
-          ],
-        },
-        options: {
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'top' },
-            tooltip: {
-              callbacks: {
-                label: (c) => `${formatEuro(c.parsed.y)}`,
-              },
-            },
+    const baseOptions = (total) => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: 0 },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: 'inherit',
+            boxWidth: 12,
+            usePointStyle: true,
           },
-          scales: {
-            x: { grid: { display: false } },
-            y: {
-              beginAtZero: true,
-              grid: { color: gridColor },
-              ticks: {
-                callback: (v) => formatEuro(v),
-              },
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const v = ctx.parsed
+              const pct = percent(v, total)
+              return `${ctx.label}: ${formatEuro(v)} (${pct.toFixed(1)}%)`
             },
           },
         },
-      })
-    }
+      },
+    })
 
-    const total = data.reduce((a, b) => a + b, 0) || 1
-    if (pieRef.current) {
-      pieChart = new Chart(pieRef.current.getContext('2d'), {
+    // 1) Gesamte monatliche Ausgaben (by category)
+    if (overallRef.current && overallData.length) {
+      const total = overallTotal || 1
+      chartInstancesRef.current.overall = new Chart(overallRef.current, {
         type: 'doughnut',
         data: {
-          labels,
+          labels: overallData.map((x) => x.cat),
           datasets: [
             {
-              data,
-              backgroundColor: colors,
+              data: overallData.map((x) => x.total),
+              backgroundColor: overallData.map((_, i) => colors[i % colors.length]),
               borderWidth: 0,
+              cutout: '60%',
             },
           ],
         },
-        options: {
-          maintainAspectRatio: false,
-          cutout: '62%',
-          plugins: {
-            legend: { position: 'top' },
-            tooltip: {
-              callbacks: {
-                label: (c) =>
-                  `${c.label}: ${formatEuro(c.parsed)} (${((c.parsed / total) * 100).toFixed(1)}%)`,
-              },
-            },
-          },
-        },
+        options: baseOptions(total),
       })
     }
 
-    if (fixedRef.current) {
-      const cols = palette(2)
-      const sumFF = (fixedMonthly + flexibleMonthly) || 1
-      fixedChart = new Chart(fixedRef.current.getContext('2d'), {
+    // 2) Fix vs flexibel
+    if (fixedFlexRef.current && (fixedMonthly > 0 || flexibleMonthly > 0)) {
+      const fixed = fixedMonthly || 0
+      const flex = flexibleMonthly || 0
+      const total = fixed + flex || 1
+      chartInstancesRef.current.fixedFlex = new Chart(fixedFlexRef.current, {
         type: 'doughnut',
         data: {
           labels: ['Fix', 'Flexibel'],
           datasets: [
             {
-              data: [fixedMonthly, flexibleMonthly],
-              backgroundColor: [cols[0], cols[1]],
+              data: [fixed, flex],
+              backgroundColor: [colors[0], colors[1]],
               borderWidth: 0,
+              cutout: '60%',
             },
           ],
         },
-        options: {
-          maintainAspectRatio: false,
-          cutout: '62%',
-          plugins: {
-            legend: { position: 'top' },
-            tooltip: {
-              callbacks: {
-                label: (c) =>
-                  `${c.label}: ${formatEuro(c.parsed)} (${((c.parsed / sumFF) * 100).toFixed(1)}%)`,
-              },
+        options: baseOptions(total),
+      })
+    }
+
+    // 3) Fixkosten – per item
+    if (fixedItemsRef.current && fixedItemData.length) {
+      const total = fixedItemsTotal || 1
+      chartInstancesRef.current.fixedItems = new Chart(fixedItemsRef.current, {
+        type: 'doughnut',
+        data: {
+          labels: fixedItemData.map((x) => x.label),
+          datasets: [
+            {
+              data: fixedItemData.map((x) => x.total),
+              backgroundColor: fixedItemData.map((_, i) => colors[i % colors.length]),
+              borderWidth: 0,
+              cutout: '60%',
             },
-          },
+          ],
         },
+        options: baseOptions(total),
+      })
+    }
+
+    // 4) Flexibel Kosten – per item
+    if (flexItemsRef.current && flexItemData.length) {
+      const total = flexItemsTotal || 1
+      chartInstancesRef.current.flexItems = new Chart(flexItemsRef.current, {
+        type: 'doughnut',
+        data: {
+          labels: flexItemData.map((x) => x.label),
+          datasets: [
+            {
+              data: flexItemData.map((x) => x.total),
+              backgroundColor: flexItemData.map((_, i) => colors[i % colors.length]),
+              borderWidth: 0,
+              cutout: '60%',
+            },
+          ],
+        },
+        options: baseOptions(total),
       })
     }
 
     return () => {
-      barChart && barChart.destroy()
-      pieChart && pieChart.destroy()
-      fixedChart && fixedChart.destroy()
+      Object.values(chartInstancesRef.current).forEach((c) => c && c.destroy())
+      chartInstancesRef.current = {}
     }
-  }, [breakdownList, fixedMonthly, flexibleMonthly])
+  }, [
+    breakdownList,
+    fixedMonthly,
+    flexibleMonthly,
+    categoriesOrder,
+    monthlyExpenses,
+    overallTotal,
+    fixedItemsTotal,
+    flexItemsTotal,
+    overallData.length,
+    fixedItemData.length,
+    flexItemData.length,
+  ])
 
   return (
-    <div className="stack">
-      <div className="chart-wrap">
-        <canvas ref={barRef} />
+    <div className="charts-block">
+      {/* Row 1: overall + fixed vs flex */}
+      <div className="budget-pies-row">
+        <div className="budget-pie">
+          <h3>Gesamte monatliche Ausgaben</h3>
+          <div className="budget-pie-chart">
+            <canvas ref={overallRef} aria-label="Gesamte monatliche Ausgaben" role="img" />
+          </div>
+          <ul className="budget-pie-list">
+            {overallData.map((item) => {
+              const pct = percent(item.total, overallTotal)
+              return (
+                <li key={item.cat}>
+                  <span>{item.cat}</span>
+                  <span>
+                    {formatEuro(item.total)} ({pct.toFixed(1)}%)
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+
+        <div className="budget-pie">
+          <h3>Fix vs. flexibel</h3>
+          <div className="budget-pie-chart">
+            <canvas ref={fixedFlexRef} aria-label="Fix vs flexibel" role="img" />
+          </div>
+          <ul className="budget-pie-list">
+            {(() => {
+              const fixed = fixedMonthly || 0
+              const flex = flexibleMonthly || 0
+              const total = fixed + flex || 1
+              return (
+                <>
+                  <li>
+                    <span>Fix</span>
+                    <span>
+                      {formatEuro(fixed)} ({percent(fixed, total).toFixed(1)}%)
+                    </span>
+                  </li>
+                  <li>
+                    <span>Flexibel</span>
+                    <span>
+                      {formatEuro(flex)} ({percent(flex, total).toFixed(1)}%)
+                    </span>
+                  </li>
+                </>
+              )
+            })()}
+          </ul>
+        </div>
       </div>
-      <div className="chart-wrap">
-        <canvas ref={pieRef} />
-      </div>
-      <div className="chart-wrap short">
-        <canvas ref={fixedRef} />
+
+      {/* Row 2: fixed / flexible per item */}
+      <div className="budget-pies-row">
+        <div className="budget-pie">
+          <h3>Fixkosten</h3>
+          <div className="budget-pie-chart">
+            <canvas ref={fixedItemsRef} aria-label="Fixkosten" role="img" />
+          </div>
+          <ul className="budget-pie-list">
+            {fixedItemData.map((item) => {
+              const pct = percent(item.total, fixedItemsTotal)
+              return (
+                <li key={item.key}>
+                  <span>{item.label}</span>
+                  <span>
+                    {formatEuro(item.total)} ({pct.toFixed(1)}%)
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+
+        <div className="budget-pie">
+          <h3>Flexible Kosten</h3>
+          <div className="budget-pie-chart">
+            <canvas ref={flexItemsRef} aria-label="Variable Kosten nach Kategorie" role="img" />
+          </div>
+          <ul className="budget-pie-list">
+            {flexItemData.map((item) => {
+              const pct = percent(item.total, flexItemsTotal)
+              return (
+                <li key={item.key}>
+                  <span>{item.label}</span>
+                  <span>
+                    {formatEuro(item.total)} ({pct.toFixed(1)}%)
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       </div>
     </div>
   )
