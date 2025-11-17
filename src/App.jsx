@@ -325,19 +325,16 @@ export default function App() {
             🌙/☀️
           </button>
         </div>
-
-      </nav >
+      </nav>
 
       {activeView === 'budget' ? (
-        <>
-             <header className="credit-header">
-                <div className="header-inner">
-                    <div className="title">
-                        <h1>Monatliches Budget – Rechner &amp; Visualisierung</h1>
-                    </div>
-                </div>
-          <div className="summary" aria-label="Summary header">
-            
+        <div className="credit-root">
+          <header className="credit-header">
+            <div className="header-inner">
+              <div className="title">
+                <h1>Monatliches Budget – Rechner &amp; Visualisierung</h1>
+              </div>
+            </div>
             <div className="summary-inner">
               <div className="kpis" role="region" aria-label="KPIs">
                 <Kpi label="Einnahmen (inkl. Boni)" value={formatEuro(earnTotalMonthly)} />
@@ -417,9 +414,7 @@ export default function App() {
                 </div>
               </div>
             </div>
-             </div>
           </header>
-
 
           <main id="app" role="main">
             {/* Einnahmen */}
@@ -809,13 +804,12 @@ export default function App() {
               Alle ausklappen
             </button>
           </div>
-        </>
+        </div>
       ) : (
         <main id="app" role="main">
           <CreditController />
         </main>
-      )
-      }
+      )}
     </>
   )
 }
