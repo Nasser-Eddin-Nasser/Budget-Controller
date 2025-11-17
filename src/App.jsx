@@ -336,7 +336,7 @@ export default function App() {
                         <h1>Monatliches Budget – Rechner &amp; Visualisierung</h1>
                     </div>
                 </div>
-          <header className="summary" aria-label="Summary header">
+          <div className="summary" aria-label="Summary header">
             
             <div className="summary-inner">
               <div className="kpis" role="region" aria-label="KPIs">
@@ -417,6 +417,7 @@ export default function App() {
                 </div>
               </div>
             </div>
+             </div>
           </header>
 
 
