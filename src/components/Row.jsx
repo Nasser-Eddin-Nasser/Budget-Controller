@@ -15,14 +15,17 @@ export default function Row({
 }) {
   const [amountInput, setAmountInput] = useState('')
   const [invalid, setInvalid] = useState(false)
+ 
 
   useEffect(() => {
     if (amount != null && amount !== '') {
-      setAmountInput(nfPlain.format(amount))
+      if (document.activeElement !== document.getElementById(`${id}-amount`)) {
+        setAmountInput(nfPlain.format(amount))
+      }
     } else {
       setAmountInput('')
     }
-  }, [amount])
+  }, [amount, id])
 
   const handleAmountChange = (e) => {
     const value = e.target.value
